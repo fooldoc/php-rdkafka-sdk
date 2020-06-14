@@ -1,1 +1,1 @@
-# php-rdkafkaSdk
+# php-rdkafka-sdk
