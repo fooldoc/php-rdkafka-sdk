@@ -18,7 +18,7 @@ php-kafka框架，重点关注业务上游，避免重复造轮子
 include_once "../RdKafkaSdk.php";
 ```
 # 代码示例
-## 生成数据
+## 生产数据
 ### 生产数据-最简单的用法示例
 ```php
 <?php
