@@ -58,7 +58,7 @@ class producer
      */
     public function runConfMulti()
     {
-        $topic = \RdKafkaSdk\Topic\Shanghai::TEST;
+        $topic = 'test';
         $producer = new  \RdKafkaSdk\Core\Producer();
         #官方配置文档:https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
         $brokers = '127.0.0.1:9092';

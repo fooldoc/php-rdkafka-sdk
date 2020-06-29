@@ -1,5 +1,4 @@
 # php-kafka框架
-
 # 项目简介
 php-kafka框架，重点关注业务上游，避免重复造轮子
 
@@ -18,8 +17,57 @@ php-kafka框架，重点关注业务上游，避免重复造轮子
 ```php
 include_once "../RdKafkaSdk.php";
 ```
-# 低级消费模式示例
-
+# 代码示例
+## 生成数据
+### 生产数据-最简单的用法示例
+```php
+<?php
+ //查看执行日志:/tmp/rdkafka.log
+        $topic = 'test';
+        $brokers = '127.0.0.1:9092';
+        $producer = new  \RdKafkaSdk\Core\Producer();
+        $producer->setBrokers($brokers)->run('message_test', $topic);
+```
+### 生产数据-进阶定制用法示例
+```php
+<?php
+        $topic = 'test';
+        $topic2 = 'test2';
+        $callback = function ($kafka, \RdKafka\Message $message) {
+            echo '打印消息:' . "\n";
+            var_export($message);
+            echo "\n";
+            if($message->err){
+                //@todo 生产失败的逻辑处理
+            } else{
+                //@todo 生产成功的逻辑处理
+            }
+        };
+        $setErrorCbCallback = function ($kafka, $err, $reason) {
+            echo sprintf("setErrorCb (error_ori:%s)(error: %s) (reason: %s)", $err, rd_kafka_err2str($err), $reason);
+        };
+        $brokers = '127.0.0.1:9092';
+        $producer = new  \RdKafkaSdk\Core\Producer();
+        //设置brokers-支持数组或者字符串
+        $producer->setBrokers($brokers)
+            //setConfDrMsgCb--设置生产消息失败与成功的回调,默认底层会调用该事件,如果自定义后就会覆盖底层的事件 \RdKafkaSdk\Core\Conf::defaultInitProducer
+            ->setConfDrMsgCb($callback)
+            //setConfErrorCb--设置错误回调,如若不设置默认会走该逻辑进行:\RdKafkaSdk\Core\Conf::defaultInit
+            ->setConfErrorCb($setErrorCbCallback)
+            //支持连贯用法生产多条数据并且是不同的topic
+            ->run('message111', $topic)->run('不同topic写数据', $topic2);
+````
+### 生产数据-高阶参数定制用法示例
+```php
+<?php
+        $topic = 'test';
+        $producer = new  \RdKafkaSdk\Core\Producer();
+        #官方配置文档:https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+        $brokers = '127.0.0.1:9092';
+        #修改参数配置-默认底层已经设置了
+        $producer->setBrokers($brokers)->setConf('socket.timeout.ms', 50)->setConf('message.timeout.ms', 1050)->run('message111', $topic);
+```
+## 低级消费
 ### 低级消费-最简单的示例
 ```php
 <?php
@@ -54,6 +102,7 @@ include_once "../RdKafkaSdk.php";
 ### 低级消费-数据打包批量回调示例
 
 ```php
+<?php
 //由于设置了setMessageMulti,所以message以数组的形式返回多条,这种形式可以满足上游业务需要批量处理数据的场景
         $callback = function ($message) {
             var_export($message);
@@ -96,7 +145,7 @@ include_once "../RdKafkaSdk.php";
             ->setMessageMulti(500, 3000)
             ->run($callback);
 ```
-# 高级消费模式示例
+## 高级消费模式示例
 
 ### 高级消费-最简单的示例
 ```php
@@ -201,7 +250,7 @@ include_once "../RdKafkaSdk.php";
 ```
 
 
-## 更多示例，直接参考此处可执行文件
+# 更多示例，直接参考此处可执行文件
 [https://github.com/fooldoc/php-rdkafka-sdk/tree/master/Examples](https://github.com/fooldoc/php-rdkafka-sdk/tree/master/Examples)
 
 
