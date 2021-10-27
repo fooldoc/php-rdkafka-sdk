@@ -11,6 +11,7 @@ abstract class ConsumerBase extends Brokers
 
     protected $__consumeTimesMs = 3000;
 
+    protected $__lockRunTimesMs = 0;
 
     public function __construct()
     {
@@ -30,6 +31,7 @@ abstract class ConsumerBase extends Brokers
                         Logs::instance()->info('已有进程在执行file=' . Flock::getPath(), TRUE);
                         sleep(1);
                     } else{
+                        $this->__lockRunTimesMs = $ilock * 1000;
                         break;
                     }
                 }
@@ -119,22 +121,19 @@ abstract class ConsumerBase extends Brokers
 
 
     /**
-     * @param         \RdKafka\Message $message
-     * @param callable                 $callbackSwitch
+     * @param \RdKafka\Message $message
+     * @param callable         $callbackSwitch
      */
     protected function __runSwitchMessage($message, callable $callbackSwitch)
     {
-
         switch($message->err){
             case RD_KAFKA_RESP_ERR_NO_ERROR:
                 $callbackSwitch($message);
                 break;
             case RD_KAFKA_RESP_ERR__PARTITION_EOF:
-                //@todo 没有数据也支持回调
                 Logs::instance()->error('No more messages; will wait for more', TRUE);
                 break;
             case RD_KAFKA_RESP_ERR__TIMED_OUT:
-                //@todo 没有数据也支持回调
                 Logs::instance()->echoLine('No more messages[2]!');
                 break;
             default:

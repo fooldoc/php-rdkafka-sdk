@@ -64,18 +64,7 @@ class Brokers
     {
         $this->__modelConf->addConfFunction($function, $callback);
         return $this;
-    }
 
-    public function setConfStatsCb($callback)
-    {
-        $this->__modelConf->addConfFunction('setStatsCb', $callback);
-        return $this;
-    }
-
-    public function setConfErrorCb($callback)
-    {
-        $this->__modelConf->addConfFunction('setErrorCb', $callback);
-        return $this;
     }
 
     public function setConf($name, $value)

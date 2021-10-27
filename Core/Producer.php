@@ -60,12 +60,6 @@ class Producer extends Brokers
 
     }
 
-    public function setConfDrMsgCb($callback)
-    {
-        $this->__modelConf->addConfFunction('setDrMsgCb', $callback);
-        return $this;
-
-    }
 
     protected function __topic($topicName, $partition = RD_KAFKA_PARTITION_UA)
     {

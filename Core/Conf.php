@@ -35,7 +35,6 @@ class Conf extends ConfBase
     public function defaultInitProducer()
     {
         $this->addConfFunction('setDrMsgCb', function ($kafka, \RdKafka\Message $message) {
-            var_export('111----');
             if($message->err){
                 $log = sprintf("%s", var_export($message, 1));
                 Logs::instance()->error('setDrMsgCb-error $message＝' . $log);

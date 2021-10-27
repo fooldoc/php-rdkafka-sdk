@@ -41,6 +41,7 @@ class Logs extends Core
     private function _base()
     {
         $one = debug_backtrace();
+        //        $topics = var_export(Topic::instance()->getTopics(), 1);
         $entry = end($one);
         $file = $entry['file'];
         $function = $entry['function'];

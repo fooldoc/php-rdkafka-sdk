@@ -46,9 +46,7 @@ class producer
         //设置brokers-支持数组或者字符串
         $producer->setBrokers($brokers)
             //setConfDrMsgCb--设置生产消息失败与成功的回调,默认底层会调用该事件,如果自定义后就会覆盖底层的事件 \RdKafkaSdk\Core\Conf::defaultInitProducer
-            ->setConfDrMsgCb($callback)
             //setConfErrorCb--设置错误回调,如若不设置默认会走该逻辑进行:\RdKafkaSdk\Core\Conf::defaultInit
-            ->setConfErrorCb($setErrorCbCallback)
             //支持连贯用法生产多条数据并且是不同的topic
             ->run('message111', $topic)->run('不同topic写数据', $topic2);
     }

@@ -24,6 +24,24 @@ class ConsumerLow extends ConsumerBase
 
     protected $__breakTimeMs = FALSE;
 
+    protected $__continuityNoMessageNum = 0;
+
+    protected $__breakNoMessageNum = 0;
+
+    /**
+     * 连续N次心跳，获取不到数据则进程停止(注意每次首次初始化心跳会获取不到一次数据，意味着初始化的时候num会先+1了)
+     * 时长计算公式= 心跳N毫秒*num
+     * 实际执行存在两种情况，以下举例说明：
+     * kafka消费过程：心跳默认值是3秒 *num默认值3 = 9秒
+     * kafka消费过程（刚初始化且有数据）：心跳默认值是3秒 *num-1 = 6秒
+     * @param int $num
+     * @return $this
+     */
+    public function setBreakNoMessageNum($num = 3)
+    {
+        $this->__breakNoMessageNum = $num;
+        return $this;
+    }
 
     /**
      * 设置kafka进程超时时间，单位毫秒
@@ -125,7 +143,8 @@ class ConsumerLow extends ConsumerBase
         if($this->__breakTimeMs === FALSE){
             return FALSE;
         }
-        if(Tools::getTimeMs() - $this->__runStartTimeMs >= $this->__breakTimeMs){
+        $endTime = $this->__breakTimeMs - $this->__lockRunTimesMs;
+        if(Tools::getTimeMs() - $this->__runStartTimeMs >= $endTime){
             return TRUE;
         }
         return FALSE;
@@ -148,12 +167,18 @@ class ConsumerLow extends ConsumerBase
             }
             $message = $this->__queue->consume($this->__consumeTimesMs);
             if(is_null($message)){
-                Logs::instance()->echoLine('No more messages[1]!');
+                Logs::instance()->echoLine('No more messages[1][' . $this->__continuityNoMessageNum . ']!');
                 if($messageMulti->getDataCounter()){
                     $this->__callbackMessageMulti($callback);
                 }
+                $this->__continuityNoMessageNum++;
+                if($this->__breakNoMessageNum > 0 && $this->__continuityNoMessageNum >= $this->__breakNoMessageNum){
+                    Logs::instance()->echoLine('No more messages break! breakNoMessageNum=[' . $this->__breakNoMessageNum . '],continuityNoMessageNum=[' . $this->__continuityNoMessageNum . ']!');
+                    break;
+                }
                 continue;
             }
+            $this->__continuityNoMessageNum = 0;
             $callbackSwitch = function ($message) use ($callback, $messageMulti, $messageMultiNum) {
                 $this->__topicsList[$message->topic_name]->offsetStore($message->partition, $message->offset);
                 $messageMulti->pushdata($message);
@@ -188,9 +213,15 @@ class ConsumerLow extends ConsumerBase
             }
             $message = $this->__queue->consume($this->__consumeTimesMs);
             if(is_null($message)){
-                Logs::instance()->echoLine('No more messages[1]!');
+                Logs::instance()->echoLine('No more messages[1][' . $this->__continuityNoMessageNum . ']!');
+                $this->__continuityNoMessageNum++;
+                if($this->__breakNoMessageNum > 0 && $this->__continuityNoMessageNum >= $this->__breakNoMessageNum){
+                    Logs::instance()->echoLine('No more messages break! breakNoMessageNum=[' . $this->__breakNoMessageNum . '],continuityNoMessageNum=[' . $this->__continuityNoMessageNum . ']!');
+                    break;
+                }
                 continue;
             }
+            $this->__continuityNoMessageNum = 0;
             $callbackSwitch = function ($message) use ($callback) {
                 $this->__topicsList[$message->topic_name]->offsetStore($message->partition, $message->offset);
                 $callback($message);
